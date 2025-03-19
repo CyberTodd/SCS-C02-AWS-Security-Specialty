@@ -1,5 +1,5 @@
-Management and Governance:
-• AWS CloudTrail
+#### Management and Governance:
+- AWS CloudTrail
 	- Tracks and logs API calls made on AWS, providing detailed logs of account activity for auditing and compliance.
 • Amazon CloudWatch
 	- Monitors and manages cloud resources, providing real-time logs, metrics, and alarms to track system performance and health.
@@ -12,7 +12,7 @@ Management and Governance:
 • AWS Trusted Advisor
 	- Offers best practice recommendations for optimizing AWS resources in terms of cost, performance, security, and fault tolerance.
 
-Networking and Content Delivery:
+#### Networking and Content Delivery:
 • Amazon VPC - Virtual Private Cloud
 	- Creates isolated networks in AWS to control resource communication, security, and IP address management.
 • Network Access Analyzer
@@ -24,7 +24,7 @@ Networking and Content Delivery:
 • VPC endpoints
 	- Provides private connections between a VPC and supported AWS services, without the need for an internet gateway or NAT.
 
-Security, Identity, and Compliance:
+#### Security, Identity, and Compliance:
 • AWS Audit Manager
 	- Automates audit evidence collection, helping organizations prepare for audits and ensuring compliance with various standards.
 • AWS Certificate Manager (ACM)
