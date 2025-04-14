@@ -1,3 +1,4 @@
+# AWS Security SCS-C02 Certification Services
 #### Management and Governance:
 - AWS CloudTrail
 	- Tracks and logs API calls made on AWS, providing detailed logs of account activity for auditing and compliance.
@@ -38,7 +39,7 @@
 - AWS Firewall Manager
 	- Centralizes the management of AWS WAF and AWS Shield for protection against common web threats across multiple accounts.
 - Amazon GuardDuty
-	- Provides threat detection by monitoring AWS accounts and workloads for malicious or unauthorized behavior.
+	- **AWS GuardDuty** continuously monitors your AWS environment for malicious or unauthorized behavior by analyzing API calls, VPC flow logs, and DNS logs.
 - AWS IAM Identity Center (AWS Single Sign-On)
 	- Provides centralized identity management and Single Sign-On (SSO) access to AWS resources and third-party apps.
 - AWS Identity and Access Management (IAM)
@@ -57,3 +58,277 @@
 	- Provides protection against DDoS attacks, offering both standard (free) and advanced protection (paid).
 - AWS WAF
 	- Protects applications from common web exploits and bots by filtering and monitoring HTTP/HTTPS requests.
+
+---
+
+# Service Features in Detail
+
+### 🛡 **AWS Identity and Access Management (IAM)**
+
+- **Least Privilege**: Assign only the permissions needed.
+    
+- **MFA Enforcement**: Deny actions unless `aws:MultiFactorAuthPresent` is true.
+    
+- **Policy Conditions**: Enforce HTTPS (`aws:SecureTransport`) or encryption usage.
+    
+- **Resource-Level Permissions**: Supported in many services (e.g., S3), **not** in RDS.
+
+### IAM Roles 
+
+- IAM roles have **temporary credentials** (STS tokens), unlike long-lived IAM users with access keys.
+- You can **limit session duration** (as short as 15 minutes) and even enforce **MFA at assume-role time**.
+- If credentials are compromised, the **short lifetime greatly reduces blast radius**.
+
+---
+
+### 🔐 **AWS Key Management Service (KMS)**
+
+- **CMKs (Customer Managed Keys)**: Required for strict compliance and control.
+    
+- **Key Rotation**: Automatically rotate keys annually.
+    
+- **Integrated With**: S3, RDS, EBS, Lambda, Secrets Manager, etc.
+    
+
+---
+
+### 📁 **Amazon S3**
+
+- **Encryption at Rest**:
+    
+    - **SSE-S3**: Amazon-managed keys
+        
+    - **SSE-KMS**: Use with CMKs for compliance
+        
+- **Block Public Access**: Must-have for securing buckets
+    
+- **Bucket Policies**: Enforce HTTPS, MFA, encryption
+- S3 Server Access Logging logs who accessed what, when, and from where    
+- **CloudTrail Data Events**: Enables access auditing
+- S3 Object Lock - WORM (Write Once - Read Many) protection also prevents deletion or overwrite of objects even by root/ admin - also is perfect for compliance frameworks
+
+---
+
+### 🧠 **AWS Secrets Manager**
+
+- **Automatic Rotation**: Built-in support for RDS, Aurora, Redshift, etc.
+    
+- **Fine-grained IAM Access**
+    
+- **KMS Integration**: Encrypt secrets with CMKs
+    
+- **CloudFormation Support**: Via **dynamic references**
+    
+- **Logging Access**: Through **CloudTrail**
+    
+
+---
+
+### 🧾 **AWS Systems Manager (SSM) Parameter Store**
+
+- **SecureString** type supports encryption with KMS
+    
+- **No native rotation** unless custom setup is used
+    
+- Can be referenced in CloudFormation, but lacks built-in rotation
+    
+
+---
+
+### 📜 **AWS CloudTrail**
+
+- **Logs all API activity** (control plane + optional data events)
+    
+- **Data Events**: Needed to track access to objects in S3 or records in RDS/Secrets Manager
+    
+- **Compliance**: Used to retain logs for auditing and investigations
+    
+
+---
+
+### 🗄 **Amazon RDS**
+
+- **Encryption at Rest**: Use KMS with CMKs
+    
+- **SSL/TLS**: Encrypt data in transit
+    
+- **No resource-level IAM**: Control fine-grained access at the DB level (e.g., GRANTs)
+    
+
+---
+
+### 💻 **AWS Lambda**
+
+- **Least Privilege Role Per Function**
+    
+- **Secrets Access**: Should use Secrets Manager, not env vars
+    
+- **Encrypted Env Vars**: Still exposed to those with view access
+    
+- **Logging & Auditing**: CloudTrail for API activity
+    
+
+---
+
+### 👁‍🗨 **Amazon Macie**
+
+- **Discover/classify** PII in **S3**
+    
+- **Not** used for blocking access or database fields
+    
+
+---
+
+### 🛡 **AWS Shield Advanced**
+
+- **DDoS protection**, **not** involved in encryption or secrets
+    
+
+---
+
+### ⚙️ **AWS CloudFormation**
+
+- **Dynamic References**: Fetch secrets from Secrets Manager or SSM securely
+    
+- **Avoid plaintext secrets** in templates or source code
+- Supports **automatic rotation**, **encryption with CMKs**, and **access control**.
+```CloudFormation
+{{resolve:secretsmanager:secret-name:SecretString:json-key::}}
+```
+- This solution is **purpose-built**, secure, and integrates directly with CloudFormation.
+
+### API Gateway
+
+- **Mutual TLS (mTLS)** ensures that **only known clients** with **valid certificates** can connect (strong client authentication)
+- **Lambda authorizers** enable **custom auth logic**, potentially using **tokens**, IP checks, org identity, etc.
+
+### NAT (Network Address Translation) Gateway
+
+- access the internet from a private subnet
+- access your network using allow-listed IP addresses
+- enable communication between overlapping networks
+
+### GuardDuty
+
+- Detects threats: EC2 credential compromise, Port scans, malware, anomalous API calls
+- Combine it with EventBridge + Lambda automation to quarantine EC2 instances by modifying Security Groups, NACLs, or stopping instances
+- Alert SOC teams in real time
+- Integrates with Security Hub, which acts as a centralized alert aggregator
+
+### SCP - Service Control Policies
+
+- Allows you to enforce org-wide guardrails
+- By using **conditions like `aws:RequestTag` or `aws:ResourceTag`**, you can block access **unless a session or resource is explicitly marked** as secure (e.g., with `Environment=Production`).
+- Helps **limit the blast radius** by **scoping where and when credentials can be used**.
+- **SCPs apply even if a user has full IAM permissions** — so they’re excellent for protecting against credential misuse across accounts.
+
+
+---
+## 🔐 **Identity & Access Management (IAM, SSO, STS)**
+
+|**Keyword**|**Service**|**Why It's Used**|
+|---|---|---|
+|Cross-account access|IAM roles + Resource/Key Policies|Enables secure access across AWS accounts|
+|Temporary credentials|AWS STS|Used for federated identity or short-lived permissions|
+|Federated users|IAM + AWS SSO|Access from external IdPs (AD, Azure AD, Okta)|
+|External identity provider|AWS SSO or Cognito|Auth via SAML, OIDC, SSO|
+|AssumeRole|IAM + STS|Key action to switch context across accounts|
+|Least privilege|IAM policies / SCPs|Minimize risk by limiting permissions|
+|Expiring access|STS / SSO sessions|Temporary credentials with auto-expiry|
+|Directory integration|AWS SSO / AD Connector / AWS Managed Microsoft AD|For on-prem AD or cloud directory use|
+|Identity federation|IAM + SSO + STS|Use corporate credentials with AWS|
+|Auditable access|CloudTrail + SSO logs + IAM Access Analyzer|For compliance and traceability|
+
+---
+
+## 🛡️ **KMS & Encryption**
+
+|**Keyword**|**Service**|**Why It's Used**|
+|---|---|---|
+|CMK / Customer-managed key|AWS KMS|Full control over key usage and access|
+|Cross-account encryption|KMS with key policy + IAM|Secure data sharing across accounts|
+|Key rotation|KMS|Automatic annual key renewal for CMKs|
+|SSE-KMS / SSE-S3|KMS / S3|Server-side encryption with customer-managed or AWS-managed keys|
+|Enforce encryption|SCP + S3 bucket policy + KMS|Ensure encryption on storage and services|
+|Key policy|KMS|Grants use/decrypt permissions on CMKs|
+|Decrypt access|KMS + IAM + Key policy|Critical for cross-account decryption of S3, RDS, etc.|
+|Compliance|CMK + CloudTrail + Object Lock|For regulations like PCI-DSS, HIPAA|
+
+---
+
+## 📦 **S3 Security & Logging**
+
+|**Keyword**|**Service**|**Why It's Used**|
+|---|---|---|
+|Immutable logs|S3 Object Lock (Compliance Mode)|WORM storage for regulatory compliance|
+|Tamper-proof|S3 + Object Lock + CloudTrail validation|For evidential integrity|
+|Log validation|CloudTrail + SHA256 + digest files|Proves no log tampering occurred|
+|Access control|Bucket policy + IAM + VPC endpoint|S3 access management layers|
+|Deny deletes|Bucket policy or Object Lock|Prevents accidental or malicious deletions|
+|Versioning|S3|Retains object history, works with Object Lock|
+|Encrypted S3|SSE-KMS|Server-side encryption with customer keys|
+|Access logs|S3 server access logging / CloudTrail|For data access tracking|
+
+---
+
+## 🧱 **VPC Networking & Firewalls**
+
+|**Keyword**|**Service**|**Why It's Used**|
+|---|---|---|
+|Private subnet|VPC|Keeps resources from direct internet access|
+|NAT Gateway|VPC|Enables outbound internet without inbound access|
+|Static IPs|NAT Gateway with Elastic IP|Auditing + allowlisting|
+|Deep packet inspection|AWS Network Firewall|Content-aware traffic filtering|
+|Central inspection|Network Firewall + custom routes|Enforce egress monitoring across workloads|
+|NACL vs Security Group|VPC|NACLs = stateless, SGs = stateful|
+|Internet access (no inbound)|NAT Gateway / Instance|Classic pattern for patching, etc.|
+|VPC Endpoint|Interface / Gateway endpoint|Private access to AWS services, not internet|
+
+---
+
+## 🛡️ **Service Control Policies (SCPs)**
+
+|**Keyword**|**Service**|**Why It's Used**|
+|---|---|---|
+|Prevent public IPs|SCP with condition on `ec2:AssociatePublicIpAddress`|Org-wide enforcement of private workloads|
+|Force encryption|SCP with condition on `s3:x-amz-server-side-encryption`|Data protection policy control|
+|Deny services/regions|SCP|Lockdown org-wide usage patterns|
+|Organizational guardrails|SCP|Cannot be overridden at account level|
+
+---
+
+## 📈 **Logging, Auditing & Monitoring**
+
+|**Keyword**|**Service**|**Why It's Used**|
+|---|---|---|
+|Immutable logs|S3 Object Lock + CloudTrail|Regulatory logging|
+|Real-time monitoring|CloudWatch Logs / Metrics / Alarms|Operational visibility|
+|Audit access|CloudTrail + Access Analyzer|Trace who did what, where, and when|
+|Centralized logging|CloudTrail org trails to S3|Audit all accounts centrally|
+|Cross-region replication|S3 CRR|Backup logs securely in another region|
+
+---
+
+## 🧠 **Security Architecture Patterns**
+
+|**Pattern / Phrase**|**Solution**|**Why It's Chosen**|
+|---|---|---|
+|Inspect traffic before egress|AWS Network Firewall|Full visibility + enforcement|
+|Prevent internet exposure|Private subnet + NAT Gateway|Outbound-only architecture|
+|External identity provider access|AWS SSO + SAML or OIDC|Partner logins, no IAM users needed|
+|Secure cross-account data access|KMS + IAM + Key policy|Fine-grained, auditable, encrypted sharing|
+|Least privilege, org-wide|SCP + IAM boundaries|Principle of least privilege at scale|
+
+---
+
+## ✅ Most Tested Use Cases
+
+|**Scenario**|**Correct Service Combo**|
+|---|---|
+|Cross-account encrypted S3 access|KMS CMK + Key policy + IAM|
+|Immutable CloudTrail logs|S3 Object Lock (Compliance mode)|
+|Deny creation of public EC2 IPs|SCP + ec2:AssociatePublicIpAddress|
+|SSO to AWS with Azure AD|AWS SSO + External IdP (SAML 2.0)|
+|Inspect outbound VPC traffic|AWS Network Firewall + NAT|
+|Internet access from private subnet|NAT Gateway + Route table|
+|Audit user actions|CloudTrail + CloudWatch + S3|
