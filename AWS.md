@@ -79,6 +79,16 @@
 - You can **limit session duration** (as short as 15 minutes) and even enforce **MFA at assume-role time**.
 - If credentials are compromised, the **short lifetime greatly reduces blast radius**.
 
+### IAM Policies
+
+- They control access to KMS keys
+
+### Security Groups
+
+- Security Groups are stateful, meaning that if you allow inbound traffic, the return is automatically allowed
+- It's best practice to explicitly define both inbound and outbound rules for better control
+- Default security groups may allow all outbound traffic, but you should adjust them as needed to minimize risks
+
 ---
 
 ### 🔐 **AWS Key Management Service (KMS)**
@@ -88,7 +98,15 @@
 - **Key Rotation**: Automatically rotate keys annually.
     
 - **Integrated With**: S3, RDS, EBS, Lambda, Secrets Manager, etc.
-    
+- SSE-KMS supports specifying a cross-account CMK ARN
+- KMS key policies control access to the KMS key itself and take precedence over IAM policies
+- To ensure **only a specific IAM role** can use the key for encryption and decryption, you need to explicitly **allow access** to that role in the **key policy**
+
+### Secrets Manager Resource Policies
+
+- Are the primary way to limit access to a specific principal (like a Lambda IAM role)
+- Enforces principle of least privilege
+- Strong protection from human access
 
 ---
 
@@ -137,12 +155,11 @@
 
 ### 📜 **AWS CloudTrail**
 
-- **Logs all API activity** (control plane + optional data events)
+- **Logs all API activity** (control plane + optional data events) for auditing, storing, and extended retention
     
 - **Data Events**: Needed to track access to objects in S3 or records in RDS/Secrets Manager
     
 - **Compliance**: Used to retain logs for auditing and investigations
-    
 
 ---
 
@@ -166,7 +183,7 @@
 - **Encrypted Env Vars**: Still exposed to those with view access
     
 - **Logging & Auditing**: CloudTrail for API activity
-    
+- Grant s3:PutObject permission to Lambda function on S3 to grant minimum necessary permissions for accessing S3 while being securely confined within a VPC
 
 ---
 
@@ -211,7 +228,7 @@
 ### GuardDuty
 
 - Detects threats: EC2 credential compromise, Port scans, malware, anomalous API calls
-- Combine it with EventBridge + Lambda automation to quarantine EC2 instances by modifying Security Groups, NACLs, or stopping instances
+- Combine it with EventBridge + Lambda automation to quarantine EC2 instances by modifying Security Groups, NACLs (Network Access Control Lists), or stopping instances
 - Alert SOC teams in real time
 - Integrates with Security Hub, which acts as a centralized alert aggregator
 
@@ -221,6 +238,11 @@
 - By using **conditions like `aws:RequestTag` or `aws:ResourceTag`**, you can block access **unless a session or resource is explicitly marked** as secure (e.g., with `Environment=Production`).
 - Helps **limit the blast radius** by **scoping where and when credentials can be used**.
 - **SCPs apply even if a user has full IAM permissions** — so they’re excellent for protecting against credential misuse across accounts.
+
+### VPC Peering
+- Allows you to securely connect two VPCs and route traffic between them, without going through the public internet
+- This is ideal for communication between different layers of your architecture, such as web and database tiers, without exposing them to public access
+- It provides a private, high-speed, and secure connection between subnets in different VPCs or within the same VPC
 
 
 ---
@@ -323,12 +345,13 @@
 
 ## ✅ Most Tested Use Cases
 
-|**Scenario**|**Correct Service Combo**|
-|---|---|
-|Cross-account encrypted S3 access|KMS CMK + Key policy + IAM|
-|Immutable CloudTrail logs|S3 Object Lock (Compliance mode)|
-|Deny creation of public EC2 IPs|SCP + ec2:AssociatePublicIpAddress|
-|SSO to AWS with Azure AD|AWS SSO + External IdP (SAML 2.0)|
-|Inspect outbound VPC traffic|AWS Network Firewall + NAT|
-|Internet access from private subnet|NAT Gateway + Route table|
-|Audit user actions|CloudTrail + CloudWatch + S3|
+| **Scenario**                        | **Correct Service Combo**          |
+| ----------------------------------- | ---------------------------------- |
+| Cross-account encrypted S3 access   | KMS CMK + Key policy + IAM         |
+| Immutable CloudTrail logs           | S3 Object Lock (Compliance mode)   |
+| Deny creation of public EC2 IPs     | SCP + ec2:AssociatePublicIpAddress |
+| SSO to AWS with Azure AD            | AWS SSO + External IdP (SAML 2.0)  |
+| Inspect outbound VPC traffic        | AWS Network Firewall + NAT         |
+| Internet access from private subnet | NAT Gateway + Route table          |
+| Audit user actions                  | CloudTrail + CloudWatch + S3       |
+
