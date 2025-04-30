@@ -90,6 +90,8 @@
 - you want to restrict S3 access so that only requests coming from your VPC (via a VPC endpoint) are allowed - we use aws: SourceVpce
 - you need to ensure that CloudTrail logs from all AWS accounts in your org are delivered centrally to one S3 bucket, and that no other accounts can write to that bucket - we use AWS Organizations with CloudTrail delegated administrator and on org trail
 - you want to ensure S3 objects are only uploaded if they are encrypted using a specific AWS KMS key (not the default one) - we use 
+- you have an s3 bucket configured to host sensitive logs from multiple services. You must ensure that only CloudTrail and Config can write to the bucket, no one (not even admins) can delete the objects, all objects are retained for at least 7 years - we should use bucket policy + s3 object lock in compliance mode + SSE-KMS
+- an auditor needs access to AWS CloudTrail logs for investigation, but must be prevented from accessing the rest of the S3 bucket contents or writing any data - you should use S3 Access Points to isolate CloudTrail logs and give the auditor read-only permissions
 
 ---
 
@@ -359,6 +361,7 @@ CloudTrail + Service last accessed data - logs what permissions are actually use
 - AWS Config comes with managed rules likes s3-bucket-public-read-prohibited and s3-bucket-public-write-prohibited, and can trigger SNS or EventBridge notifications the moment a bucket goes public.
 - AWS Systems Manager Automation with AWS Config can be used for security governance if you want to automatically remediate noncompliant resources (auto-encrypt unencrypt EBS volumes)
 - if you want to detect if access keys haven't been used in 90 days, and take automated action like disabling them - we should use AWS Config with a custom rule
+- a financial services company wants to implement automated threat response to GuardDuty findings, Specifically, if an EC2 instance is flagged for a known threat (e.g. Bitcoin mining), it must be quarantined immediately by removing it from any Auto Scaling groups, Blocking all outbound traffic, Sending an alert to the security team - the most efficient architecture is to use GuardDuty findings as EventBridge triggers to invoke a Lambda function that modifies security groups and detaches the instance
 
 ### AWS Organizations
 
@@ -384,3 +387,4 @@ CloudTrail + Service last accessed data - logs what permissions are actually use
 
 ### Other 
 - your company requires all AWS resources to be deployed with tags that indicate data classification (e.g. DataSensitivity=Confidential). The security team must be alerted if untagged resources are created - use AWS Config rules to evaluate resources and trigger SNS via EventBridge
+
