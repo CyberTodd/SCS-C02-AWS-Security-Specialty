@@ -388,3 +388,55 @@ CloudTrail + Service last accessed data - logs what permissions are actually use
 ### Other 
 - your company requires all AWS resources to be deployed with tags that indicate data classification (e.g. DataSensitivity=Confidential). The security team must be alerted if untagged resources are created - use AWS Config rules to evaluate resources and trigger SNS via EventBridge
 
+
+### 🛡️ **AWS Security Services – Keyword Cheatsheet Table**
+
+|**Keyword / Service**|**Use Case / Function**|**Common in Questions About**|**Key Notes / Best Practices**|
+|---|---|---|---|
+|**IAM (Identity and Access Management)**|User/role creation, permission control|Access control, least privilege|Use roles over users, prefer fine-grained policies, apply least privilege|
+|**IAM Role**|Delegation of permissions, especially for cross-account access|Cross-account, service access|Use trust policies and attach permission policies carefully|
+|**IAM Policy**|Defines what actions are allowed/denied|Authorization, access control|Can be inline or managed; scope tightly|
+|**IAM Permission Boundary**|Limits the maximum permissions a role/user can have|Scoped access, delegation control|Great for managing permissions in a multi-team environment|
+|**SCP (Service Control Policy)**|Account-level permission restrictions in Organizations|Organizational controls, denial of services|Prevents unwanted actions regardless of IAM permissions|
+|**STS (Security Token Service)**|Temporary credentials for users/services|Temporary access, federated identity|Often used in cross-account and federated identity scenarios|
+|**KMS (Key Management Service)**|Encryption key management for AWS services|Encryption at rest, key rotation, compliance|Use CMKs; enable key rotation; restrict access to key policies|
+|**CMK (Customer Managed Key)**|Custom encryption keys|KMS usage, custom encryption|More control than AWS-managed keys; can use for auditing and compliance|
+|**S3 Bucket Policy**|Resource-based policy for S3|Access control, data exfiltration prevention|Can restrict access by IP, VPC, AWS account|
+|**S3 Encryption (SSE-KMS, SSE-S3, SSE-C)**|Server-side encryption options|Data protection, compliance|SSE-KMS integrates with KMS; SSE-C uses client-provided keys|
+|**Macie**|Data discovery and classification for sensitive info (like PII)|Data loss prevention, audit|Use for identifying unencrypted sensitive data in S3|
+|**GuardDuty**|Threat detection and intelligent anomaly detection using VPC logs, DNS, CloudTrail|Threat analysis, detection, monitoring|Detects things like port scanning, credential misuse, DGA domains|
+|**Security Hub**|Centralized security findings and compliance view|Aggregation, monitoring|Integrates with GuardDuty, Macie, Inspector, IAM Access Analyzer|
+|**AWS Inspector**|Vulnerability scanning for EC2 and container images|Vulnerability management|Focuses on CVEs and security posture of compute environments|
+|**CloudTrail**|Tracks API activity and events across the AWS account|Auditing, forensics, monitoring|Enable across all regions; store logs in S3; use for security analysis|
+|**CloudWatch Logs**|Logs from applications, Lambda, and AWS services|Operational visibility, alerting|Use metric filters + alarms for real-time monitoring|
+|**CloudWatch Events / EventBridge**|Triggers based on changes/events in AWS|Automation, response orchestration|Common in automation with Lambda for incident response|
+|**VPC Flow Logs**|Logs IP traffic in and out of VPCs|Traffic analysis, incident response|Store in CloudWatch or S3; use with GuardDuty or custom analytics|
+|**NACL (Network ACL)**|Stateless subnet-level firewall|Network-level control|Evaluate both inbound/outbound; not suitable for fine-grained control|
+|**Security Groups**|Stateful virtual firewalls for EC2 and resources|Instance-level protection|Best practice: deny-all by default; allow only required inbound ports|
+|**WAF (Web Application Firewall)**|Protects web apps from common exploits|OWASP threats, HTTP filtering|Works with CloudFront, ALB, API Gateway; supports rules like IP blocks and rate limiting|
+|**Shield / Shield Advanced**|DDoS protection|High-availability services|Shield Advanced includes cost protection and 24/7 support|
+|**Secrets Manager**|Securely store, rotate, and manage secrets (DB creds, API keys)|Credential management|Automatic rotation; integrates with Lambda and RDS|
+|**AWS Config**|Monitors and evaluates AWS resource configurations|Compliance auditing, drift detection|Use with conformance packs for regulatory frameworks|
+|**Access Analyzer**|Identifies resources that are shared publicly or across accounts|Permissions visibility|Helps reduce risk of unintended public exposure|
+|**Trusted Advisor**|Provides real-time guidance to improve security, performance, cost|Security insights, account optimization|Best for general recommendations; integrates into Security Hub|
+|**Organizations**|Multi-account management with consolidated billing and policy enforcement|Central governance|Combine with SCPs and consolidated logging|
+|**VPC Endpoint (Interface/Gateway)**|Private connection to AWS services over AWS network|Private S3 access, internal data access|Reduces exposure to public internet|
+|**MFA (Multi-Factor Auth)**|Adds extra authentication layer|Root account protection, IAM security|Always enforce for root and privileged IAM users|
+
+---
+
+### 🔑 **Common Keyword Patterns on the Exam:**
+
+|**Keyword in Question**|**Likely Answer Theme**|
+|---|---|
+|"Cross-account access"|IAM Roles + Trust Policy or STS|
+|"Prevent access to S3 from outside"|S3 Bucket Policy with IP conditions or VPC Endpoint|
+|"Temporary credentials"|AWS STS or IAM Role with session duration|
+|"Anomaly detection"|GuardDuty or Security Hub|
+|"Sensitive data detection"|Macie|
+|"Audit access"|CloudTrail + Config|
+|"Remediate automatically"|Lambda with CloudWatch Events / EventBridge|
+|"Limit access even with full IAM permissions"|SCP or Permission Boundary|
+|"Network-level security"|NACL, Security Groups, VPC Flow Logs|
+|"Encryption in transit"|TLS, HTTPS, ACM|
+|"Encryption at rest"|KMS, SSE-KMS, CMK|
